@@ -65,7 +65,7 @@ public class VacacionesServiceImpl implements VacacionesService {
     @Override
     @Transactional
     public SolicitudVacaciones responderSolicitud(Long solicitudId, String nuevoEstado, String motivoRechazo) {
-        SolicitudVacaciones solicitud = solicitudRepository.findById(solicitidId)
+        SolicitudVacaciones solicitud = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
 
         if (!solicitud.getEstado().equals("Pendiente")) {
