@@ -3,32 +3,33 @@ package com.example.demo.controller;
 import com.example.demo.model.Usuario;
 import com.example.demo.model.Puesto;
 import com.example.demo.model.Delegacion;
-import com.example.demo.model.FestivoDelegacion; // Ajusta el nombre según tu modelo
+import com.example.demo.model.SolicitudVacaciones;
 import com.example.demo.repository.UsuarioRepository;
 import com.example.demo.repository.PuestoRepository;
 import com.example.demo.repository.DelegacionRepository;
-import com.example.demo.repository.FestivoDelegacionRepository; // Ajusta si usas repositorio directo
+import com.example.demo.repository.SolicitudVacacionesRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api") // Mapea la raíz /api/ que espera tu Angular
-@CrossOrigin(origins = "http://localhost:4200")
+@RequestMapping("/api")
+// ⚠️ Se elimina @CrossOrigin para evitar conflictos con SecurityConfig.java
 public class MantenimientoController {
 
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private PuestoRepository puestoRepository;
     @Autowired private DelegacionRepository delegacionRepository;
-    // Si no usas repositorios directos, inyecta tus Services aquí de la misma forma
+    @Autowired private SolicitudVacacionesRepository solicitudVacacionesRepository;
 
     // --- ENDPOINTS PARA USUARIOS ---
     @GetMapping("/usuarios")
     public List<Usuario> obtenerUsuarios() {
-        return usuarioRepository.findAll(); // Esto jala los datos reales de Neon
+        return usuarioRepository.findAll();
     }
 
     @PostMapping("/usuarios")
@@ -76,6 +77,26 @@ public class MantenimientoController {
         return ResponseEntity.ok().build();
     }
 
+    // --- AUTENTICACIÓN ---
+    @PostMapping("/auth/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
+        String email = credentials.get("email");
+        String password = credentials.get("password");
 
-    
+        return usuarioRepository.findByEmail(email)
+                .map(usuario -> {
+                    if (usuario.getPasswordHash() != null && usuario.getPasswordHash().equals(password)) {
+                        return ResponseEntity.ok(usuario);
+                    } else {
+                        return ResponseEntity.status(401).body(Map.of("error", "Contraseña incorrecta"));
+                    }
+                })
+                .orElseGet(() -> ResponseEntity.status(401).body(Map.of("error", "El correo no existe en la base de datos")));
+    }
+
+    // --- VACACIONES GENERALES ---
+    @GetMapping("/vacaciones")
+    public List<SolicitudVacaciones> obtenerTodasLasVacaciones() {
+        return solicitudVacacionesRepository.findAll();
+    }
 }
